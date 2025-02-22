@@ -7,7 +7,7 @@ This project provides a semantic search engine for PDF documents using FAISS and
 1. Clone the repository:
    ```bash
    git clone https://github.com/bahagh/PDF-Knowledge-Miner.git
-   cd sem
+   cd PDF-Knowledge-Miner
    ```
 2. Install dependancies:
 
