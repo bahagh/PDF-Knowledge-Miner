@@ -1,29 +1,27 @@
-# PDF Knowledge Miner v2.0 - Production-Ready Semantic Search Engine
+# PDF Knowledge Miner - Semantic Search Engine
 
-A high-performance, production-ready semantic search engine for PDF documents with advanced AI capabilities, built with FastAPI, PostgreSQL + pgvector, and Redis.
+A semantic search engine for PDF documents built with FastAPI, PostgreSQL + pgvector, and Redis.
 
 ## 🚀 Key Features
 
-### Performance Optimizations
-- **Database Storage**: PostgreSQL with pgvector extension for efficient vector similarity search
-- **Caching**: Redis for embeddings, search results, and frequently accessed data
-- **Parallel Processing**: Concurrent PDF processing with configurable worker pools
-- **Intelligent Chunking**: Smart text segmentation with semantic boundaries
-- **Incremental Updates**: Only reprocess changed documents
+### Core Functionality
+- **Database Storage**: PostgreSQL with pgvector extension for vector similarity search
+- **Caching**: Redis for embeddings and search results
+- **PDF Processing**: Extract and chunk text from PDF documents
+- **Text Chunking**: Split documents into searchable segments
+- **Vector Embeddings**: Generate embeddings using sentence transformers
 
-### Production-Ready Architecture
+### API & Architecture
 - **REST API**: FastAPI with async endpoints and automatic documentation
-- **Containerization**: Docker and Docker Compose for easy deployment
-- **Configuration Management**: Environment-based settings with validation
-- **Structured Logging**: JSON logging with Sentry integration
-- **Health Checks**: Comprehensive monitoring and diagnostics
-- **Background Tasks**: Asynchronous document processing
+- **Containerization**: Docker and Docker Compose deployment
+- **Configuration Management**: Environment-based settings
+- **Health Checks**: Basic application monitoring
 
-### AI Capabilities
+### Search Capabilities
 - **Semantic Search**: Vector similarity search using sentence transformers
-- **Question Answering**: Integrated QA models for answer extraction
-- **Multiple Models**: Configurable embedding and QA models
-- **Smart Chunking**: Context-aware text segmentation
+- **Question Answering**: Basic QA functionality with search results
+- **Configurable Models**: Embedding model selection
+- **Similarity Scoring**: Adjustable similarity thresholds
 
 ## 🏗️ Architecture
 
@@ -32,9 +30,8 @@ A high-performance, production-ready semantic search engine for PDF documents wi
 │   FastAPI App   │    │   PostgreSQL    │    │     Redis       │
 │                 │────│   + pgvector    │    │   (Caching)     │
 │  REST API       │    │                 │    │                 │
-│  Background     │    │  Documents      │    │  Embeddings     │
-│  Tasks          │    │  Chunks         │    │  Search Results │
-│  Health Checks  │    │  Vectors        │    │  Sessions       │
+│  Health Check   │    │  Documents      │    │  Embeddings     │
+│  Upload/Search  │    │  Chunks         │    │  Search Cache   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │
          ▼
@@ -43,8 +40,7 @@ A high-performance, production-ready semantic search engine for PDF documents wi
 ├─────────────────┬─────────────────┬─────────────────────────────┤
 │ PDF Processor   │ Search Service  │ Cache Service               │
 │ - PyMuPDF       │ - Vector Search │ - Redis Client              │
-│ - Text Chunking │ - QA Pipeline   │ - TTL Management            │
-│ - Parallel Proc │ - Analytics     │ - Serialization             │
+│ - Text Chunking │ - Basic QA      │ - TTL Management            │
 └─────────────────┴─────────────────┴─────────────────────────────┘
 ```
 
@@ -68,17 +64,11 @@ A high-performance, production-ready semantic search engine for PDF documents wi
    ```bash
    # Start core services (app, database, cache)
    docker-compose up -d
-   
-   # Or with monitoring (includes Prometheus, Grafana)
-   docker-compose --profile monitoring up -d
-   
-   # Or with Nginx proxy for production
-   docker-compose --profile production up -d
    ```
 
 4. **Verify deployment**
    ```bash
-   curl http://localhost:8000/health
+   curl http://localhost:8001/health
    ```
 
 ### Option 2: Local Development
@@ -91,12 +81,8 @@ A high-performance, production-ready semantic search engine for PDF documents wi
 
 2. **Install dependencies**
    ```bash
-   # Using Poetry (recommended)
-   poetry install
-   poetry shell
-   
-   # Or using pip
-   pip install -r requirements-prod.txt
+   # Using pip
+   pip install -e .
    ```
 
 3. **Setup databases**
@@ -122,11 +108,8 @@ A high-performance, production-ready semantic search engine for PDF documents wi
 
 6. **Start the application**
    ```bash
-   # Web API
-   python -m app.cli serve
-   
-   # Or directly with uvicorn
-   uvicorn app.main:app --reload
+   # Start web server
+   uvicorn app.main:app --reload --port 8001
    ```
 
 ## 🔧 Configuration
@@ -153,46 +136,38 @@ QA_MODEL=deepset/roberta-base-squad2
 
 # API
 API_HOST=0.0.0.0
-API_PORT=8000
-
-# Security
-SECRET_KEY=your-secret-key-here
+API_PORT=8001
 ```
 
 ### Performance Tuning
 
 For optimal performance:
 
-1. **Database**: Increase `shared_buffers`, `effective_cache_size`
+1. **Database**: Increase PostgreSQL `shared_buffers` and `effective_cache_size`
 2. **Redis**: Configure memory limits and eviction policies
-3. **Workers**: Set `MAX_WORKERS` based on CPU cores
-4. **Batch Size**: Increase `BATCH_SIZE` for better GPU utilization
+3. **Workers**: Adjust FastAPI worker count based on CPU cores
 
 ## 📖 Usage
 
 ### Web API
 
 Access the interactive API documentation:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+- **Swagger UI**: http://localhost:8001/docs
+- **ReDoc**: http://localhost:8001/redoc
 
 ### Command Line Interface
 
-```bash
-# Search documents
-python -m app.cli search -q "What is machine learning?" -k 5 --qa
+Basic CLI commands available:
 
-# Process all PDFs
-python -m app.cli process --force
+```bash
+# Search documents  
+python -m app.cli search -q "What is machine learning?" -k 5
+
+# Initialize database
+python -m app.cli init-database
 
 # Check system status
 python -m app.cli status
-
-# Clear cache
-python -m app.cli clear-cache --cache-type embeddings
-
-# Start web server
-python -m app.cli serve
 ```
 
 ### API Endpoints
@@ -253,49 +228,46 @@ for result in results["results"]:
 
 ### Compared to Original Version
 
-| Metric | Original | Optimized | Improvement |
-|--------|----------|-----------|-------------|
+| Metric | Original | Current | Improvement |
+|--------|----------|---------|-------------|
 | Processing Speed | ~15 min | ~2-3 min | **5-7x faster** |
-| Memory Usage | High | Optimized | **60% reduction** |
+| Memory Usage | High | Reduced | **Significant reduction** |
 | Search Latency | 2-5s | 100-300ms | **10-20x faster** |
-| Scalability | Single file | Distributed | **Unlimited** |
-| Reliability | Basic | Production | **99.9% uptime** |
+| Storage | File-based | Database | **Better scalability** |
 
 ### Key Optimizations
 
 1. **Database Storage**: PostgreSQL with pgvector eliminates file I/O bottlenecks
 2. **Caching Strategy**: Redis caches embeddings and search results
-3. **Parallel Processing**: Concurrent document processing
-4. **Smart Chunking**: Reduces redundant processing
-5. **Model Optimization**: Singleton pattern for ML models
-6. **Async Architecture**: Non-blocking I/O operations
+3. **Model Optimization**: Efficient loading and reuse of ML models
+4. **Async Architecture**: Non-blocking I/O operations
 
 ## 🐳 Docker Deployment
 
-### Production Deployment
+### Basic Deployment
 
 ```bash
-# Production setup with all services
-docker-compose --profile production up -d
+# Start all services
+docker-compose up -d
 
 # Monitor logs
 docker-compose logs -f app
 
-# Scale the application
-docker-compose up -d --scale app=3
+# Stop services
+docker-compose down
 ```
 
 ### Development
 
 ```bash
-# Development with hot reload
-docker-compose -f docker-compose.dev.yml up -d
-
-# Run tests
-docker-compose exec app pytest
+# Start with logs
+docker-compose up
 
 # Access database
 docker-compose exec postgres psql -U pdf_user -d pdf_miner
+
+# View Redis data
+docker-compose exec redis redis-cli
 ```
 
 ## 📊 Monitoring
@@ -325,72 +297,40 @@ Structured JSON logging with:
 
 ## 🔒 Security
 
-- **Environment Variables**: Sensitive data in env files
-- **CORS Configuration**: Configurable origins
+- **Environment Variables**: Configuration via .env files
 - **Input Validation**: Pydantic models for API validation
-- **File Upload Security**: Type and size validation
-- **Database Security**: Parameterized queries, connection pooling
+- **File Upload Security**: File type and size validation
+- **Database Security**: Parameterized queries and connection pooling
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
-pytest
+# Run the end-to-end test
+python test_e2e.py
 
-# Run with coverage
-pytest --cov=app --cov-report=html
-
-# Run specific test categories
-pytest tests/test_api.py
-pytest tests/test_search.py
-pytest tests/test_processing.py
+# Test API endpoints manually
+curl -X POST "http://localhost:8001/api/v1/search/" \
+     -H "Content-Type: application/json" \
+     -d '{"query": "machine learning", "top_k": 5}'
 ```
-
-## 🚀 Scaling & Production
-
-### Horizontal Scaling
-
-1. **Multiple App Instances**: Use load balancer with Docker Compose
-2. **Database Scaling**: Read replicas for search queries
-3. **Cache Distribution**: Redis cluster for high availability
-4. **Background Workers**: Separate Celery workers for processing
-
-### Performance Tuning
-
-1. **Database Optimization**:
-   - Increase connection pool size
-   - Configure pgvector indexes
-   - Enable query optimization
-
-2. **Cache Optimization**:
-   - Tune TTL values
-   - Configure memory policies
-   - Monitor hit rates
-
-3. **Application Tuning**:
-   - Adjust worker counts
-   - Optimize batch sizes
-   - Profile ML model inference
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests
-5. Run quality checks: `black`, `isort`, `flake8`, `mypy`
-6. Submit a pull request
+4. Test your changes
+5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## 🙋‍♂️ Support
 
-- **Documentation**: Check the `/docs` endpoint when running
+- **Documentation**: Check the `/docs` endpoint when running the application
 - **Issues**: Create GitHub issues for bugs and feature requests
-- **Discussions**: Use GitHub Discussions for questions
 
 ---
 
-**Ready for production!** 🚀 This optimized version provides enterprise-grade performance, scalability, and reliability for semantic PDF search applications.
+**Semantic PDF search made simple!** 🚀 This application provides efficient vector-based search capabilities for PDF document collections.
