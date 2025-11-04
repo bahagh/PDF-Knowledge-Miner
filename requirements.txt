@@ -1,6 +1,0 @@
-PyPDF2
-sentence-transformers
-faiss-cpu
-numpy
-transformers
-torch
